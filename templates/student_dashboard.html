@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Career Training System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #1a73e8;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .card-main {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            grid-column: span 2;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 1rem;
+            font-size: 18px;
+        }
+
+        .card-content {
+            padding: 1rem;
+        }
+
+        .list-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .button:hover {
+            background-color: #1557b0;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin: 0.25rem;
+            font-size: 14px;
+        }
+
+        .skills-list {
+            margin-top: 15px;
+        }
+        .skill-item {
+            margin-bottom: 15px;
+        }
+        .skill-tag {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .skill-bar {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            width: 100%;
+            height: 10px;
+            margin: 5px 0;
+        }
+
+        .skill-progress {
+            height: 100%;
+            background-color: #4caf50;
+        }
+        .proficiency-level {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background-color: #e8f0fe;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        select.form-control {
+            background-color: white;
+        }
+
+        .enrollment-action {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .enrollment-status {
+            font-size: 14px;
+        }
+        .enrollment-status.success {
+            color: #28a745;
+        }
+        .enrollment-status.error {
+            color: #dc3545;
+        }
+
+        .button.delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Welcome {{ session.user_type.title() }}, {{ user.name }}!</h1>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </nav>
+
+    <div class="container">
+        <div class="card-main">
+            <!-- User Information Section -->
+            <div class="card-header">User Information</div>
+            <div class="card-content">
+                <div class="list-item">
+                    <p><strong>Student ID:</strong> {{ user.student_id }}</p>
+                    <p><strong>Name:</strong> {{ user.name }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>GPA:</strong> {{ user.gpa }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Courses Section -->
+        <div class="card">
+            <div class="card-header">Enrolled Courses</div>
+            <div class="card-content">
+                {% for course in courses %}
+                <div class="list-item">
+                    <h3>{{ course.title }}</h3>
+                    <p>Trainer: {{ course.trainer_name }}</p>
+                    <p>Description: {{ course.description }}</p>
+                    <p>Status: <span class="status">{{ course.status }}</span></p>
+                    <!-- Add this right before your form -->
+                    {% if error %}
+                    <div class="error-message" style="color: #dc3545; background-color: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('drop_course', course_id=course.course_id) }}" style="display: inline;">
+                        <button type="submit" class="button delete" onclick="return confirm('Are you sure you want to drop this course?')">Drop Course</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+            
+        <!-- Course Enrollment Section -->
+        <div class="card">
+            <div class="card-header">Course Enrollment</div>
+            <div class="card-content">
+                <form method="POST" action="{{ url_for('student_dashboard') }}" onsubmit="showDeleteStatus('{{ get_flashed_messages(with_categories=true)|tojson }}')">
+                    <div class="list-item">
+                        <h3>Enroll in New Course</h3>
+                        <div class="form-group">
+                            <label for="course_id">Select Course:</label>
+                            <select name="course_id" id="course_id" required class="form-control">
+                                <option value="">-- Select a Course --</option>
+                                {% for course in available_courses %}
+                                    <option value="{{ course.course_id }}">{{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="enrollment-action">
+                            <button type="submit" class="button">Enroll Now</button>
+                            <!-- oncompletion="return enrollment-status {{ category }}
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <span class="enrollment-status {{ category }}">{{ message }}
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %} -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div> -->
+
+        <!-- Jobs Section -->
+        <div class="card">
+            <div class="card-header">Job Applications</div>
+            <div class="card-content">
+                {% if applications %}
+                    {% for application in applications %}
+                    <div class="list-item">
+                        <h3>{{ application.title }}</h3>
+                        <p>Company: {{ application.company_name }}</p>
+                        <p>Description: {{ application.description }}</p>
+                        <p>Posted on: {{ application.posting_date }}</p>
+                        <p>Status: <span class="status">{{ application.status }}</span></p>
+                        <a href="#" class="button">View Jobs</a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="list-item">
+                        <p>No applications submitted.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="card">
+            <div class="card-header">My Profile</div>
+            <div class="card-content">
+                <h3>Skills</h3>
+                <div class="skills-list">
+                    {% for skill in skills %}
+                    <div class="skill-item">
+                        <span class="skill-tag">{{ skill.name }}</span>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: {{ skill.proficiency * 10 }}%;"></div>
+                        </div>
+                        <span class="proficiency-level">Proficiency: {{ skill.proficiency }}/10</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="#" class="button">Update Skills</a>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="card">
+            <div class="card-header">Statistics</div>
+            <div class="card-content">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number">4</div>
+                        <div>Courses Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div>Active Applications</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">8</div>
+                        <div>Skills Updated</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user.gpa }}</div>
+                        <div>GPA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function showDeleteStatus(messages) {
+        // Parse the JSON messages
+        const messageData = JSON.parse(messages);
+        // Handle the messages here
+        return true; // or false to prevent form submission
+    }
+    </script>
+</html>

@@ -1,0 +1,161 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Training System - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-header h1 {
+            color: #1a73e8;
+            font-size: 24px;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #5f6368;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #202124;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 0.25rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .submit-btn:hover {
+            background-color: #1557b0;
+        }
+
+        .submit-btn:disabled {
+            background-color: #dadce0;
+            cursor: not-allowed;
+        }
+
+        .flash-messages {
+            margin-bottom: 1rem;
+        }
+
+        .flash-message {
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-size: 14px;
+        }
+
+        .flash-message.error {
+            background-color: #fde8e8;
+            color: #c81e1e;
+            border: 1px solid #fbd5d5;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Career Training System</h1>
+            <p>Please select your role and enter your ID to login</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="form-group">
+                <label for="userType">Select Role</label>
+                <select id="userType" name="userType" required>
+                    <option value="">Select your role</option>
+                    <option value="student">Student</option>
+                    <option value="trainer">Trainer</option>
+                    <option value="company">Company</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="userId">ID Number</label>
+                <input type="text" id="userId" name="userId" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" value="password" required>
+                <p class="password-hint">Default password is "password"</p>
+            </div>
+
+            <button type="submit" class="submit-btn">Log In</button>
+        </form>
+    </div>
+</body>
+</html>
