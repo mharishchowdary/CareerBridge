@@ -207,6 +207,11 @@
             color: white;
         }
 
+        .button.view {
+            background-color: #1a73e8;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -311,7 +316,7 @@
                         <p>Description: {{ application.description }}</p>
                         <p>Posted on: {{ application.posting_date }}</p>
                         <p>Status: <span class="status">{{ application.status }}</span></p>
-                        <a href="#" class="button">View Jobs</a>
+                        <!-- <a href="#" class="button">View Jobs</a> -->
                     </div>
                     {% endfor %}
                 {% else %}
@@ -319,6 +324,28 @@
                         <p>No applications submitted.</p>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Companies Section -->
+        <div class="card">
+            <div class="card-header">Companies</div>
+            <div class="card-content">
+                {% for company in companies %}
+                <div class="list-item">
+                    <h3>{{ company.name }}</h3>
+                    <p>Industry: {{ company.industry }}</p>
+                    <!-- Add this right before your form -->
+                    {% if error %}
+                    <div class="error-message" style="color: #dc3545; background-color: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #f5c6cb;">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('view_jobs', company_id=company.company_id) }}" style="display: inline;">
+                        <button type="submit" class="button view">View Job Openings</button>
+                    </form>
+                </div>
+                {% endfor %}
             </div>
         </div>
 

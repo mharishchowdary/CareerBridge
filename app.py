@@ -209,6 +209,12 @@ def student_dashboard():
                 """, (session['user']['student_id'],))
                 courses = cur.fetchall()
 
+                # Get Companies
+                cur.execute("""
+                    SELECT * FROM company
+                """)
+                companies = cur.fetchall()
+
                 # Get available courses (not enrolled)
                 cur.execute("""
                     SELECT c.*, t.name as trainer_name 
@@ -244,6 +250,7 @@ def student_dashboard():
                 return render_template('student_dashboard.html', 
                                     user=session['user'],
                                     courses=courses,
+                                    companies=companies,
                                     available_courses=available_courses,
                                     applications=applications,
                                     skills=skills)
@@ -252,6 +259,108 @@ def student_dashboard():
     
     flash('Database connection error', 'error')
     return redirect(url_for('index'))
+
+
+@app.route('/view-jobs/<int:company_id>', methods=['GET', 'POST'])
+def view_jobs(company_id):
+    if 'user' not in session or session['user_type'] != 'student':
+        return redirect(url_for('index'))
+    
+    conn = get_db_connection()
+    jobs = []
+    company = {}
+    if conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Fetch course details
+                cur.execute("""
+                    SELECT name, industry 
+                    FROM company 
+                    WHERE company_id = %s
+                """, (company_id,))
+                company = cur.fetchone()
+                if not company:
+                    flash('Company not found or not authorized to view.', 'error')
+                    return redirect(url_for('student_dashboard'))
+                
+                # Fetch jobs for the specific company
+                cur.execute("""
+                    SELECT 
+                        j.job_id,
+                        j.title,
+                        j.description,
+                        j.posting_date,
+                        string_agg(s.name, ', ') as required_skills
+                    FROM JOB_POSTING j
+                    LEFT JOIN JOB_SKILL js ON j.job_id = js.job_id
+                    LEFT JOIN SKILL s ON js.skill_id = s.skill_id
+                    WHERE j.company_id = %s
+                    GROUP BY j.job_id, j.title, j.description, j.posting_date
+                    ORDER BY j.posting_date DESC;
+                """, (company_id,))
+                jobs = cur.fetchall()
+        finally:
+            conn.close()
+    
+    return render_template('view_jobs.html', user=session['user'], company=company, jobs=jobs)
+
+@app.route('/apply-job/<int:job_id>', methods=['POST'])
+def apply_job(job_id):
+    if 'user' not in session or session['user_type'] != 'student':
+        flash('Please login as a student to apply for jobs', 'error')
+        return redirect(url_for('login'))
+    
+    student_id = session['user']['student_id']
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # First get the company_id for this job
+                cur.execute("""
+                    SELECT company_id 
+                    FROM JOB_POSTING 
+                    WHERE job_id = %s
+                """, (job_id,))
+                job_result = cur.fetchone()
+                if not job_result:
+                    flash('Job not found', 'error')
+                    return redirect(url_for('student_dashboard'))
+                
+                company_id = job_result['company_id']
+
+                # Check if already applied
+                cur.execute("""
+                    SELECT * FROM APPLICATION 
+                    WHERE student_id = %s AND job_id = %s
+                """, (student_id, job_id))
+                
+                if cur.fetchone():
+                    flash('You have already applied for this job', 'warning')
+                else:
+                    # Insert new application
+                    cur.execute("""
+                        INSERT INTO APPLICATION 
+                        (job_id, student_id) 
+                        VALUES (%s, %s)
+                    """, (job_id, student_id))
+                    
+                    conn.commit()
+                    flash('Successfully applied for the job!', 'success')
+            
+            return redirect(url_for('view_jobs', user=session['user'], company_id=company_id))
+                
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error applying for job: {str(e)}', 'error')
+            return redirect(url_for('student_dashboard'))
+        finally:
+            conn.close()
+    
+    flash('Database connection error', 'error')
+    return redirect(url_for('student_dashboard'))
+
+
 
 """
 @app.route('/delete_course/<int:course_id>', methods=['POST'])
