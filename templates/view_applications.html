@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Applications - {{ job.title }}</title>
+    <style>
+        /* Include your existing styles */
+        .application-list {
+            margin-top: 2rem;
+        }
+        .application-item {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .status-form {
+            margin-top: 1rem;
+        }
+        .status-select {
+            padding: 0.5rem;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Applications for {{ job.title }}</h1>
+        <a href="{{ url_for('company_dashboard') }}" class="back-btn">Back to Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="job-details">
+            <h2>{{ job.title }}</h2>
+            <p>{{ job.description }}</p>
+            <p><strong>Posted:</strong> {{ job.posting_date.strftime('%Y-%m-%d') }}</p>
+        </div>
+
+        <div class="application-list">
+            {% if applications %}
+                {% for app in applications %}
+                    <div class="application-item">
+                        <h3>{{ app.student_name }}</h3>
+                        <p><strong>Email:</strong> {{ app.email }}</p>
+                        <p><strong>GPA:</strong> {{ app.gpa }}</p>
+                        <p><strong>Applied:</strong> {{ app.apply_date.strftime('%Y-%m-%d') }}</p>
+                        <p><strong>Current Status:</strong> {{ app.status }}</p>
+                        
+                        <form class="status-form" method="POST" action="{{ url_for('update_application_status', application_id=app.application_id) }}">
+                            <select name="status" class="status-select">
+                                <option value="Applied" {% if app.status == 'Applied' %}selected{% endif %}>Applied</option>
+                                <option value="Under Review" {% if app.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                <option value="Interviewed" {% if app.status == 'Interviewed' %}selected{% endif %}>Interviewed</option>
+                                <option value="Offered" {% if app.status == 'Offered' %}selected{% endif %}>Offered</option>
+                                <option value="Accepted" {% if app.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                                <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                            <button type="submit" class="button">Update Status</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No applications received yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Career Training System - Login</title>
+    <title>Career Training System - Register</title>
     <style>
+        /* All previous styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -69,12 +70,6 @@
             border-color: #1a73e8;
         }
 
-        .password-hint {
-            font-size: 12px;
-            color: #5f6368;
-            margin-top: 0.25rem;
-        }
-
         .submit-btn {
             width: 100%;
             padding: 0.75rem;
@@ -89,11 +84,6 @@
 
         .submit-btn:hover {
             background-color: #1557b0;
-        }
-
-        .submit-btn:disabled {
-            background-color: #dadce0;
-            cursor: not-allowed;
         }
 
         .flash-messages {
@@ -113,15 +103,43 @@
             border: 1px solid #fbd5d5;
         }
 
-        /* New styles for the buttons container */
+        .flash-message.success {
+            background-color: #e6f4ea;
+            color: #1e8e3e;
+            border: 1px solid #d4edda;
+        }
+
         .button-container {
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
         }
 
-        .button-container .submit-btn {
+        .back-btn {
             flex: 1;
+            padding: 0.75rem;
+            background-color: white;
+            color: #1a73e8;
+            border: 1px solid #1a73e8;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            background-color: #f6f9fe;
+        }
+
+        /* Add styles for conditional fields */
+        .conditional-fields {
+            display: none;
+        }
+
+        .conditional-fields.active {
+            display: block;
         }
     </style>
 </head>
@@ -129,7 +147,7 @@
     <div class="login-container">
         <div class="login-header">
             <h1>Career Training System</h1>
-            <p>Please select your role and enter your ID to login</p>
+            <p>Create your account</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -142,10 +160,10 @@
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('login') }}" method="POST">
+        <form action="{{ url_for('register_submit') }}" method="POST">
             <div class="form-group">
                 <label for="userType">Select Role</label>
-                <select id="userType" name="userType" required>
+                <select id="userType" name="userType" required onchange="showFields()">
                     <option value="">Select your role</option>
                     <option value="student">Student</option>
                     <option value="trainer">Trainer</option>
@@ -154,21 +172,58 @@
             </div>
 
             <div class="form-group">
-                <label for="userId">ID Number</label>
-                <input type="text" id="userId" name="userId" required>
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required>
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" value="password" required>
-                <p class="password-hint">Default password is "password"</p>
+            <!-- Student-specific fields -->
+            <div id="studentFields" class="conditional-fields">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email">
+                </div>
+                <div class="form-group">
+                    <label for="gpa">GPA (0-4)</label>
+                    <input type="number" id="gpa" name="gpa" min="0" max="4" step="0.01">
+                </div>
+            </div>
+
+            <!-- Trainer-specific fields -->
+            <div id="trainerFields" class="conditional-fields">
+                <div class="form-group">
+                    <label for="specialization">Specialization</label>
+                    <input type="text" id="specialization" name="specialization">
+                </div>
+            </div>
+
+            <!-- Company-specific fields -->
+            <div id="companyFields" class="conditional-fields">
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <input type="text" id="industry" name="industry">
+                </div>
             </div>
 
             <div class="button-container">
-                <button type="submit" class="submit-btn">Log In</button>
-                <a href="{{ url_for('register') }}" class="submit-btn">Register</a>
+                <button type="submit" class="submit-btn">Register</button>
+                <a href="{{ url_for('index') }}" class="back-btn">Back to Login</a>
             </div>
         </form>
     </div>
+
+    <script>
+        function showFields() {
+            // Hide all conditional fields
+            document.querySelectorAll('.conditional-fields').forEach(field => {
+                field.classList.remove('active');
+            });
+            
+            // Show fields based on selected user type
+            const userType = document.getElementById('userType').value;
+            if (userType) {
+                document.getElementById(userType + 'Fields').classList.add('active');
+            }
+        }
+    </script>
 </body>
 </html>
