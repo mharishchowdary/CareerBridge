@@ -51,10 +51,10 @@
                         <form class="status-form" method="POST" action="{{ url_for('update_application_status', application_id=app.application_id) }}">
                             <select name="status" class="status-select">
                                 <option value="Applied" {% if app.status == 'Applied' %}selected{% endif %}>Applied</option>
-                                <option value="Under Review" {% if app.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                <!-- <option value="Under Review" {% if app.status == 'Under Review' %}selected{% endif %}>Under Review</option> -->
                                 <option value="Interviewed" {% if app.status == 'Interviewed' %}selected{% endif %}>Interviewed</option>
                                 <option value="Offered" {% if app.status == 'Offered' %}selected{% endif %}>Offered</option>
-                                <option value="Accepted" {% if app.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                                <!-- <option value="Accepted" {% if app.status == 'Accepted' %}selected{% endif %}>Accepted</option> -->
                                 <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Rejected</option>
                             </select>
                             <button type="submit" class="button">Update Status</button>
