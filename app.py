@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from hashing import hash_password, verify_password
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'  # Required for flash messages and sessions
@@ -32,32 +33,54 @@ def login():
         flash('Please fill all fields', 'error')
         return redirect(url_for('index'))
     
-    if password != 'password':  # Simple password check
-        flash('Invalid password', 'error')
-        return redirect(url_for('index'))
-    
     conn = get_db_connection()
     if conn:
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 if user_type == 'student':
-                    cur.execute("SELECT * FROM student WHERE student_id = %s", (user_id,))
+                    cur.execute("""
+                        SELECT student_id, password_hash, password_salt, * 
+                        FROM student 
+                        WHERE student_id = %s
+                    """, (user_id,))
                 elif user_type == 'trainer':
-                    cur.execute("SELECT * FROM trainer WHERE trainer_id = %s", (user_id,))
+                    cur.execute("""
+                        SELECT trainer_id, password_hash, password_salt, * 
+                        FROM trainer 
+                        WHERE trainer_id = %s
+                    """, (user_id,))
                 elif user_type == 'company':
-                    cur.execute("SELECT * FROM company WHERE company_id = %s", (user_id,))
+                    cur.execute("""
+                        SELECT company_id, password_hash, password_salt, * 
+                        FROM company 
+                        WHERE company_id = %s
+                    """, (user_id,))
                 else:
                     flash('Invalid user type', 'error')
                     return redirect(url_for('index'))
                 
                 user = cur.fetchone()
-                if user:
-                    session['user'] = dict(user)
-                    session['user_type'] = user_type
-                    return redirect(url_for(f'{user_type}_dashboard'))
+                if user and 'password_hash' in user and 'password_salt' in user:
+                    # Verify the password using the stored hash and salt
+                    # print(user['password_hash'], user['password_salt'], password)
+                    if password=="password" and user['password_salt']==None and user['password_hash']==None:
+                        session['user'] = dict(user)
+                        session['user_type'] = user_type
+                        return redirect(url_for(f'{user_type}_dashboard'))
+                    elif verify_password(password, user['password_salt'], user['password_hash']):
+                        # Remove password-related fields before storing in session
+                        session_user = dict(user)
+                        session_user.pop('password_hash', None)
+                        session_user.pop('password_salt', None)
+                        
+                        session['user'] = session_user
+                        session['user_type'] = user_type
+                        return redirect(url_for(f'{user_type}_dashboard'))
+                    else:
+                        flash('Invalid password', 'error')
                 else:
                     flash(f'Invalid {user_type} ID', 'error')
-                    return redirect(url_for('index'))
+                return redirect(url_for('index'))
                 
         except Exception as e:
             flash(f'Error during login: {str(e)}', 'error')
@@ -76,6 +99,7 @@ def register():
 def register_submit():
     user_type = request.form.get('userType')
     name = request.form.get('name')
+    password = request.form.get('password')  # New field for password
     
     # Additional fields based on user type
     email = request.form.get('email')  # Only for students
@@ -83,14 +107,23 @@ def register_submit():
     industry = request.form.get('industry')  # Only for companies
     gpa = request.form.get('gpa')  # Only for students
     
-    if not user_type or not name:
+    # Validate required fields
+    if not all([user_type, name, password]):
         flash('Please fill all required fields', 'error')
+        return redirect(url_for('register'))
+    
+    # Password strength validation
+    if len(password) < 8:
+        flash('Password must be at least 8 characters long', 'error')
         return redirect(url_for('register'))
     
     # Validate user type specific fields
     if user_type == 'student' and (not email or not gpa):
         flash('Email and GPA are required for students', 'error')
         return redirect(url_for('register'))
+    
+    # Generate password hash and salt
+    password_salt, password_hash = hash_password(password)
     
     conn = get_db_connection()
     if conn:
@@ -106,22 +139,25 @@ def register_submit():
                         flash(str(e), 'error')
                         return redirect(url_for('register'))
                         
-                    cur.execute(
-                        "INSERT INTO student (name, email, gpa) VALUES (%s, %s, %s) RETURNING student_id",
-                        (name, email, gpa)
-                    )
+                    cur.execute("""
+                        INSERT INTO student (name, email, gpa, password_hash, password_salt) 
+                        VALUES (%s, %s, %s, %s, %s) 
+                        RETURNING student_id
+                    """, (name, email, gpa, password_hash, password_salt))
                     
                 elif user_type == 'trainer':
-                    cur.execute(
-                        "INSERT INTO trainer (name, specialization) VALUES (%s, %s) RETURNING trainer_id",
-                        (name, specialization)
-                    )
+                    cur.execute("""
+                        INSERT INTO trainer (name, specialization, password_hash, password_salt) 
+                        VALUES (%s, %s, %s, %s) 
+                        RETURNING trainer_id
+                    """, (name, specialization, password_hash, password_salt))
                     
                 elif user_type == 'company':
-                    cur.execute(
-                        "INSERT INTO company (name, industry) VALUES (%s, %s) RETURNING company_id",
-                        (name, industry)
-                    )
+                    cur.execute("""
+                        INSERT INTO company (name, industry, password_hash, password_salt) 
+                        VALUES (%s, %s, %s, %s) 
+                        RETURNING company_id
+                    """, (name, industry, password_hash, password_salt))
                     
                 else:
                     flash('Invalid user type', 'error')

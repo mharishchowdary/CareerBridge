@@ -584,3 +584,22 @@ INSERT INTO PLACEMENT (student_id, company_id, offer_date, package, status) VALU
 (7, 8, '2024-03-13', 89000.00, 'Rejected'),
 (9, 9, '2024-03-12', 91000.00, 'Offered'),
 (10, 10, '2024-03-11', 86000.00, 'Accepted');
+
+
+
+
+
+-- Step 12: Password Encryption
+
+ALTER TABLE STUDENT 
+ADD COLUMN password_hash VARCHAR(255),
+ADD COLUMN password_salt VARCHAR(255);
+
+ALTER TABLE TRAINER 
+ADD COLUMN password_hash VARCHAR(255),
+ADD COLUMN password_salt VARCHAR(255);
+
+ALTER TABLE COMPANY 
+ADD COLUMN password_hash VARCHAR(255),
+ADD COLUMN password_salt VARCHAR(255);
+
