@@ -205,34 +205,37 @@ def student_dashboard():
         try:
             # Handle POST request (form submission)
             if request.method == 'POST':
-                course_id = request.form.get('course_id')
-                student_id = session['user']['student_id']
+                action = request.form.get('action')
                 
-                if not all([course_id]):
-                    flash('Please fill all fields', 'error')
-                else:
-                    with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                        # Check if already enrolled
-                        cur.execute("""
-                            SELECT * FROM enrollment 
-                            WHERE student_id = %s AND course_id = %s
-                        """, (student_id, course_id))
-                        
-                        if cur.fetchone():
-                            flash('You are already enrolled in this course', 'error')
-                        else:
-                            # Insert new enrollment
-                            try:
-                                cur.execute("""
-                                    INSERT INTO enrollment (student_id, course_id, status)
-                                    VALUES (%s, %s, 'Active')
-                                """, (student_id, course_id))
-                                conn.commit()
-                                flash('Successfully enrolled in the course!', 'success')
-                                return redirect(url_for('student_dashboard'))
-                            except Exception as e:
-                                conn.rollback()
-                                flash(f'Enrollment failed: {str(e)}', 'error')
+                if action == 'course_enroll':
+                    course_id = request.form.get('course_id')
+                    student_id = session['user']['student_id']
+                    
+                    if not all([course_id]):
+                        flash('Please fill all fields', 'error')
+                    else:
+                        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                            # Check if already enrolled
+                            cur.execute("""
+                                SELECT * FROM enrollment 
+                                WHERE student_id = %s AND course_id = %s
+                            """, (student_id, course_id))
+                            
+                            if cur.fetchone():
+                                flash('You are already enrolled in this course', 'error')
+                            else:
+                                # Insert new enrollment
+                                try:
+                                    cur.execute("""
+                                        INSERT INTO enrollment (student_id, course_id, status)
+                                        VALUES (%s, %s, 'Active')
+                                    """, (student_id, course_id))
+                                    conn.commit()
+                                    flash('Successfully enrolled in the course!', 'success')
+                                    return redirect(url_for('student_dashboard'))
+                                except Exception as e:
+                                    conn.rollback()
+                                    flash(f'Enrollment failed: {str(e)}', 'error')
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Get courses
@@ -283,18 +286,84 @@ def student_dashboard():
                 """, (session['user']['student_id'],))
                 skills = cur.fetchall()
 
+                # Availble Skills
+                cur.execute("""
+                    SELECT *
+                    FROM skill
+                """)
+                available_skills = cur.fetchall()
+                # print(summary)
+
+                cur.execute("""
+                    SELECT scs.total_courses, scs.total_skills, scs.avg_skill_score
+                    FROM student_course_skill_summary scs
+                    WHERE scs.student_id = %s
+                """, (session['user']['student_id'],))
+                summary = cur.fetchall()
+                # print(summary)
+
                 return render_template('student_dashboard.html', 
                                     user=session['user'],
                                     courses=courses,
                                     companies=companies,
                                     available_courses=available_courses,
                                     applications=applications,
-                                    skills=skills)
+                                    skills=skills,
+                                    summary=summary[0],
+                                    available_skills=available_skills)
         finally:
             conn.close()
     
     flash('Database connection error', 'error')
     return redirect(url_for('index'))
+
+
+@app.route('/update_skills', methods=['POST'])
+def update_skills():
+    if 'user' not in session or session['user_type'] != 'student':
+        flash('Please login as a student', 'error')
+        return redirect(url_for('login'))
+
+    skill_id = request.form.get('skill_id')
+    proficiency = request.form.get('proficiency')
+    student_id = session['user']['student_id']
+    
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Check if student already has this skill
+                cur.execute("""
+                    SELECT * FROM student_skill 
+                    WHERE student_id = %s AND skill_id = %s
+                """, (student_id, skill_id))
+                
+                if cur.fetchone():
+                    # Update existing skill
+                    cur.execute("""
+                        UPDATE student_skill 
+                        SET proficiency = %s
+                        WHERE student_id = %s AND skill_id = %s
+                    """, (proficiency, student_id, skill_id))
+                    flash('Skill updated successfully!', 'success')
+                else:
+                    # Insert new skill
+                    cur.execute("""
+                        INSERT INTO student_skill (student_id, skill_id, proficiency)
+                        VALUES (%s, %s, %s)
+                    """, (student_id, skill_id, proficiency))
+                    flash('Skill added successfully!', 'success')
+                
+                conn.commit()
+                
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error updating skill: {str(e)}', 'error')
+        finally:
+            conn.close()
+    
+    return redirect(url_for('student_dashboard'))
+
 
 
 @app.route('/view-jobs/<int:company_id>', methods=['GET', 'POST'])
@@ -650,6 +719,44 @@ def view_applications(job_id):
                          user=session['user'],
                          job=job,
                          applications=applications)
+
+
+@app.route('/drop-job/<int:job_id>', methods=['POST'])
+def drop_job(job_id):
+    """
+    Allow a company to drop a job they've posted.
+    """
+    company_id = session['user']['company_id']
+    
+    conn = get_db_connection()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('company.dashboard'))
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Add any required condition
+            
+            # Proceed with the deletion
+            try:
+                cur.execute("""
+                    DELETE FROM job_posting 
+                    WHERE job_id = %s
+                """, (job_id,))
+                
+                conn.commit()
+                flash('Job successfully dropped.', 'success')
+                
+            except Exception as e:
+                conn.rollback()
+                flash(f'Failed to drop job: {str(e)}', 'error')
+                
+    except Exception as e:
+        flash(f'Error processing request: {str(e)}', 'error')
+    finally:
+        conn.close()
+    
+    return redirect(url_for('company_dashboard'))
 
 @app.route('/update-application-status/<int:application_id>', methods=['POST'])
 def update_application_status(application_id):

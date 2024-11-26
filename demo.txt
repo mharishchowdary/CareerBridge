@@ -1,0 +1,19 @@
+1) Database Creation  ---  Intro and Explain the Project and usecases
+
+2) Show Domains by inserting application_status or interview_type  --- UI update application status from company
+3) Show Cascading by adding a job, and a student apply job in application, then delete job posting -- show from UI
+4) Show indexes from postgres sidebar of specific table
+5) Show views from statistics in UI or by using select *(backend)
+
+6) Show Created Roles in Postgres
+7) Assertions -- postgres doen't support but explain we can use triggers instead and sample msql supported assertions
+8) Cursors -- Show in Code, that by using cursors we implemented
+9) Functions --- Explain in Trigger itself
+
+10) Trigger -- Register new student then the skill will be automatically added and proficency will be set to gpa*2.5
+Old Trigger(Design Issue) - Create an interview for a company and student, then the student application status to the jobs in that company will be automatically moved to interviewd
+
+
+11) Insert Data ---- Basic Testing
+
+12) Show the password encryption as suggested by professor

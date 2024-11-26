@@ -166,6 +166,15 @@
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <nav class="navbar">
         <h1>Welcome Company, {{ user.name }}!</h1>
         <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
@@ -214,6 +223,9 @@
                         <!-- View Applications Button -->
                         <form method="GET" action="{{ url_for('view_applications', job_id=job.job_id) }}" style="display: inline;">
                             <button type="submit" class="button">View Applications</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('drop_job', job_id=job.job_id) }}" style="display: inline;">
+                            <button type="submit" class="button">Delete Job</button>
                         </form>
                     </div>
                     {% endfor %}

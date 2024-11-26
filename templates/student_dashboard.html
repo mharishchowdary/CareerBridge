@@ -215,6 +215,15 @@
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <nav class="navbar">
         <h1>Welcome {{ session.user_type.title() }}, {{ user.name }}!</h1>
         <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
@@ -265,6 +274,7 @@
                 <form method="POST" action="{{ url_for('student_dashboard') }}" onsubmit="showDeleteStatus('{{ get_flashed_messages(with_categories=true)|tojson }}')">
                     <div class="list-item">
                         <h3>Enroll in New Course</h3>
+                        <input type="hidden" name="action" value="course_enroll">
                         <div class="form-group">
                             <label for="course_id">Select Course:</label>
                             <select name="course_id" id="course_id" required class="form-control">
@@ -369,22 +379,65 @@
             </div>
         </div>
 
+        <!-- Course Enrollment Section -->
+        <div class="card">
+            <div class="card-header">Skill Enrollment</div>
+            <div class="card-content">
+                <form method="POST" action="{{ url_for('update_skills') }}" onsubmit="showDeleteStatus('{{ get_flashed_messages(with_categories=true)|tojson }}')">
+                    <div class="list-item">
+                        <h3>Add New Skill</h3>
+                        <div class="form-group">
+                            <label for="skill_id">Select Skill:</label>
+                            <select name="skill_id" id="skill_id" required class="form-control">
+                                <option value="">-- Select a Skill --</option>
+                                {% for skill in available_skills %}
+                                    <option value="{{ skill.skill_id }}">{{ skill.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="proficiency">Proficiency Level (1-10):</label>
+                            <input type="number" 
+                                   name="proficiency" 
+                                   id="proficiency" 
+                                   min="1" 
+                                   max="10" 
+                                   required 
+                                   class="form-control"
+                                   value="5">
+                        </div>
+                        <div class="enrollment-action">
+                            <button type="submit" class="button">Update Skills</button>
+                            <!-- oncompletion="return enrollment-status {{ category }}
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <span class="enrollment-status {{ category }}">{{ message }}
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %} -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Statistics Section -->
-        <!-- <div class="card">
+        <div class="card">
             <div class="card-header">Statistics</div>
             <div class="card-content">
                 <div class="stats">
                     <div class="stat-card">
-                        <div class="stat-number">4</div>
-                        <div>Courses Completed</div>
+                        <div class="stat-number">{{ summary.total_courses }}</div>
+                        <div>Total Courses</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">3</div>
-                        <div>Active Applications</div>
+                        <div class="stat-number">{{ summary.total_skills }}</div>
+                        <div>Total Skills</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">8</div>
-                        <div>Skills Updated</div>
+                        <div class="stat-number">{{ summary.avg_skill_score }}</div>
+                        <div>Average Skill Score</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number">{{ user.gpa }}</div>
@@ -392,7 +445,7 @@
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
     </div>
 </body>
 <script>
